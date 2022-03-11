@@ -1,5 +1,12 @@
+// memanggil express
 const express = require("express")
+
+// membuat object app dari express
 const app = express()
+
+// memanggil cors
+const cors = require("cors")
+app.use(cors())
 
 // panggil router member
 const member = require("./routers/member")
@@ -27,7 +34,7 @@ const { login } = require("./routers/login")
 
 app.use("/api/login", login)
 
-
+// membuat port
 app.listen(8000, () => {
     console.log(`Server run on port 8000`);
 })

@@ -76,6 +76,7 @@ app.post("/", (request, response) => {
     })
 })
 
+// endpoint update data transaksi
 app.put("/:id_transaksi", async(request, response) => {
     //tampung data utk insert ke tabel transaksi
     let dataTransaksi = {
@@ -91,6 +92,10 @@ app.put("/:id_transaksi", async(request, response) => {
     let parameter = {
         id_transaksi: request.params.id_transaksi
     }
+
+    // Proses update transaksi: setelah berhasil insert ke tabel transaksi data detail 
+    // transaksi yg lama dihapus semua berdasarkan id_transaksinya setelah dihapus, 
+    // dimasukkan lagi menggunakan bulkCreate
 
     transaksi.update(dataTransaksi, {where: parameter})
     .then(async (result) => {
@@ -124,13 +129,10 @@ app.put("/:id_transaksi", async(request, response) => {
         })
     })
 
-    // setelh berhasil insert ke tabel transaksi
-    // data detail transaksi yg lama dihapus semua berdasarkan
-    // id_transaksinya
-    // setelah dihapus, dimasukkan lagi menggunakan bulkCreate
     
 })
 
+//endpoint delete data transaksi
 app.delete("/:id_transaksi", (request, response) => {
     let parameter = {
         id_transaksi: request.params.id_transaksi

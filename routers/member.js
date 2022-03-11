@@ -26,7 +26,7 @@ app.get("/", async (request, response) => {
 
 // endpoint add new member
 app.post("/", (request, response) => {
-    let newMember = {
+    let newMember = { //menampung data
         nama: request.body.nama, 
         alamat: request.body.alamat,
         jenis_kelamin: request.body.jenis_kelamin,
@@ -36,7 +36,8 @@ app.post("/", (request, response) => {
     member.create(newMember)
     .then(result => {
         response.json({
-            message: `Data berhasil ditambahkan`
+            message: `Data berhasil ditambahkan`,
+            data: result
         })
     })
     .catch(error => {

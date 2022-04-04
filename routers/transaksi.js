@@ -7,25 +7,34 @@ app.use(express.json())
 const models = require("../models/index")
 const transaksi = models.transaksi
 const detail_transaksi = models.detail_transaksi
+const outlet = models.outlet
 
 // panggil fungsi auth -> validasi token
-const {auth} = require("./login")
+const { auth } = require("./login")
 
 // fungsi auth dijadikan middleware
 app.use(auth)
 
 // endpoint get transaksi
-app.get("/", async(request, response) => {
+app.get("/", async (request, response) => {
     let dataTransaksi = await transaksi.findAll({
         include: [
-            { model: models.member, as: "member"},
-            { model: models.users, as: "user"},
-            { 
-                model: models.detail_transaksi, 
+            { model: models.member, as: "member" },
+            {
+                model: models.users, as: "user",
+                include: [
+                    { model: models.outlet, as: "outlet" }
+                ]
+            },
+            {
+                model: models.detail_transaksi,
                 as: "detail_transaksi",
                 include: [
-                    {model: models.paket, as:"paket"}
+                    { model: models.paket, as: "paket" }
                 ]
+            },
+            {
+                model: models.outlet, as: "outlet"
             }
         ]
     })
@@ -40,44 +49,45 @@ app.post("/", (request, response) => {
         tgl_bayar: request.body.tgl_bayar,
         status: 1,
         dibayar: request.body.dibayar,
-        id_user: request.body.id_user
+        id_user: request.body.id_user,
+        id_outlet: request.body.id_outlet
     }
 
     transaksi.create(newTransaksi)
-    .then(result => {
-        // jika insert transaksi berhasil, lanjut 
-        // insert data detail transaksinya
-        let newIDTransaksi = result.id_transaksi
-
-        let detail = request.body.detail_transaksi
-        for (let i = 0; i < detail.length; i++) {
-            // sebelumnya nilai detail[i] hanya punya key id_paket
-            // dan qty saja
-            detail[i].id_transaksi = newIDTransaksi 
-        }
-
-        // proses insert detail_transaksi
-        detail_transaksi.bulkCreate(detail)
         .then(result => {
-            return response.json({
-                message: `Data transaksi berhasil ditambahkan`
-            })
+            // jika insert transaksi berhasil, lanjut 
+            // insert data detail transaksinya
+            let newIDTransaksi = result.id_transaksi
+
+            let detail = request.body.detail_transaksi
+            for (let i = 0; i < detail.length; i++) {
+                // sebelumnya nilai detail[i] hanya punya key id_paket
+                // dan qty saja
+                detail[i].id_transaksi = newIDTransaksi
+            }
+
+            // proses insert detail_transaksi
+            detail_transaksi.bulkCreate(detail)
+                .then(result => {
+                    return response.json({
+                        message: `Data transaksi berhasil ditambahkan`
+                    })
+                })
+                .catch(error => {
+                    return response.json({
+                        message: error.message
+                    })
+                })
         })
         .catch(error => {
             return response.json({
                 message: error.message
             })
         })
-    })
-    .catch(error => {
-        return response.json({
-            message: error.message
-        })
-    })
 })
 
 // endpoint update data transaksi
-app.put("/:id_transaksi", async(request, response) => {
+app.put("/:id_transaksi", async (request, response) => {
     //tampung data utk insert ke tabel transaksi
     let dataTransaksi = {
         id_member: request.body.id_member,
@@ -86,7 +96,8 @@ app.put("/:id_transaksi", async(request, response) => {
         tgl_bayar: request.body.tgl_bayar,
         status: request.body.status,
         dibayar: request.body.dibayar,
-        id_user: request.body.id_user
+        id_user: request.body.id_user,
+        id_outlet: request.body.id_outlet
     }
     // tampung parmeter id_transaksi
     let parameter = {
@@ -97,39 +108,39 @@ app.put("/:id_transaksi", async(request, response) => {
     // transaksi yg lama dihapus semua berdasarkan id_transaksinya setelah dihapus, 
     // dimasukkan lagi menggunakan bulkCreate
 
-    transaksi.update(dataTransaksi, {where: parameter})
-    .then(async (result) => {
-        // hapus data detail transaksi yang lama
-        await detail_transaksi.destroy({where: parameter})
+    transaksi.update(dataTransaksi, { where: parameter })
+        .then(async (result) => {
+            // hapus data detail transaksi yang lama
+            await detail_transaksi.destroy({ where: parameter })
 
-        // masukkan data detail yang baru
-        let detail = request.body.detail_transaksi
-        for (let i = 0; i < detail.length; i++) {
-            // sebelumnya nilai detail[i] hanya punya key id_paket
-            // dan qty saja
-            detail[i].id_transaksi = request.params.id_transaksi 
-        }
+            // masukkan data detail yang baru
+            let detail = request.body.detail_transaksi
+            for (let i = 0; i < detail.length; i++) {
+                // sebelumnya nilai detail[i] hanya punya key id_paket
+                // dan qty saja
+                detail[i].id_transaksi = request.params.id_transaksi
+            }
 
-        // proses insert detail_transaksi
-        detail_transaksi.bulkCreate(detail)
-        .then(result => {
-            return response.json({
-                message: `Data transaksi berhasil diubah`
-            })
+            // proses insert detail_transaksi
+            detail_transaksi.bulkCreate(detail)
+                .then(result => {
+                    return response.json({
+                        message: `Data transaksi berhasil diubah`
+                    })
+                })
+                .catch(error => {
+                    return response.json({
+                        message: error.message
+                    })
+                })
         })
         .catch(error => {
             return response.json({
                 message: error.message
             })
         })
-    })
-    .catch(error => {
-        return response.json({
-            message: error.message
-        })
-    })
 
-    
+
 })
 
 //endpoint delete data transaksi
@@ -139,26 +150,26 @@ app.delete("/:id_transaksi", (request, response) => {
     }
 
     //delete detail transaksi
-    detail_transaksi.destroy({where: parameter})
-    .then(result => {
-        // hapus data transaksi
-        transaksi.destroy({where: parameter})
-        .then(hasil => {
-            return response.json({
-                message: `data berhasil dihapus`
-            })
+    detail_transaksi.destroy({ where: parameter })
+        .then(result => {
+            // hapus data transaksi
+            transaksi.destroy({ where: parameter })
+                .then(hasil => {
+                    return response.json({
+                        message: `data berhasil dihapus`
+                    })
+                })
+                .catch(error => {
+                    return response.json({
+                        message: error.message
+                    })
+                })
         })
         .catch(error => {
             return response.json({
                 message: error.message
             })
         })
-    })
-    .catch(error => {
-        return response.json({
-            message: error.message
-        })
-    })
 
 })
 
@@ -175,21 +186,21 @@ app.post("/status/:id_transaksi", (request, response) => {
     }
 
     // proses edit / update status transaksi
-    transaksi.update(data, {where: parameter})
-    .then(result => {
-        return response.json({
-            message: `Data status berhasil diubah`
+    transaksi.update(data, { where: parameter })
+        .then(result => {
+            return response.json({
+                message: `Data status berhasil diubah`
+            })
         })
-    })
-    .catch(error => {
-        return response.json({
-            message: error.message
+        .catch(error => {
+            return response.json({
+                message: error.message
+            })
         })
-    })
 })
 
 // endpoint mengubah status pembayaran
-app.get("/bayar/:id_transaksi", (request, response)=> {
+app.get("/bayar/:id_transaksi", (request, response) => {
     let parameter = {
         id_transaksi: request.params.id_transaksi
     }
@@ -200,19 +211,17 @@ app.get("/bayar/:id_transaksi", (request, response)=> {
         dibayar: true
     }
     // proses ubah transaksi
-    transaksi.update(data, {where: parameter})
-    .then(result => {
-        return response.json({
-            message: `Transaksi telah dibayar`
+    transaksi.update(data, { where: parameter })
+        .then(result => {
+            return response.json({
+                message: `Transaksi telah dibayar`
+            })
         })
-    })
-    .catch(error => {
-        return response.json({
-            message: error.message
+        .catch(error => {
+            return response.json({
+                message: error.message
+            })
         })
-    })
 })
 
 module.exports = app
-
-

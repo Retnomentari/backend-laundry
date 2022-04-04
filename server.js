@@ -24,6 +24,11 @@ const users = require("./routers/users")
 
 app.use("/api/users", users)
 
+// panggil router outlet
+const outlet = require("./routers/outlet")
+
+app.use("/api/outlet", outlet)
+
 // panggil router transaksi
 const transaksi = require("./routers/transaksi")
 

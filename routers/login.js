@@ -18,6 +18,7 @@ login.post('/', async(request, response) => {
         where: newLogin
     });
     
+    //generate token
     if(dataUser){
         let payload = JSON.stringify(dataUser)
         let  token = jwt.sign(payload,secretKey)

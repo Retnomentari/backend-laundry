@@ -6,6 +6,7 @@ app.use(express.json())
 
 const models = require("../models/index")
 const users = models.users
+const outlet = models.outlet
 
 // panggil fungsi auth -> validasi token
 const {auth} = require("./login")
@@ -15,7 +16,14 @@ app.use(auth)
 
 // endpoint for get all users
 app.get("/", async (request, response) => {
-    let dataUsers = await users.findAll()
+    let dataUsers = await users.findAll(
+        {
+            include: {
+                model: models.outlet, as:"outlet"
+            }
+        }
+    )
+
 
     return response.json(dataUsers)
 })
@@ -26,7 +34,8 @@ app.post("/", (request, response) => {
         nama: request.body.nama,
         username: request.body.username,
         password: md5(request.body.password),
-        role: request.body.role
+        role: request.body.role,
+        id_outlet:request.body.id_outlet
     }
 
     users.create(newUsers)
@@ -49,7 +58,8 @@ app.put("/:id_user", (request, response) => {
     let data = {
         nama: request.body.nama,
         username: request.body.username,
-        role: request.body.role
+        role: request.body.role,
+        id_outlet:request.body.id_outlet
     }
     if (request.body.password) {
         data.password = md5(request.body.password)

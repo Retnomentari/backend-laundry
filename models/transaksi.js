@@ -20,6 +20,11 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "id_user", as: "user"
       })
 
+      // tbl transaksi join ke tabel outlet
+      this.belongsTo(models.outlet, {
+        foreignKey: "id_outlet", as:"outlet"
+      })
+
       // tbl transaksi join ke tabel detail transaksi
       this.hasMany(models.detail_transaksi, {
         foreignKey: "id_transaksi", as:"detail_transaksi"
@@ -38,7 +43,8 @@ module.exports = (sequelize, DataTypes) => {
     tgl_bayar: DataTypes.DATE,
     status: DataTypes.INTEGER,
     dibayar: DataTypes.INTEGER,
-    id_user: DataTypes.INTEGER
+    id_user: DataTypes.INTEGER,
+    id_outlet: DataTypes.INTEGER
   }, {
     sequelize,
     modelName: 'transaksi',
